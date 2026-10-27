@@ -135,7 +135,7 @@
 <section class="scr wp" id="lock"><div id="ld"></div><div id="lt"></div>
   <div class="qb" style="left:44px"><span class="io" data-io="flashlight"></span></div><div class="qb" style="right:44px"><span class="io" data-io="camera"></span></div><div id="lhint">Swipe up to open</div></section>
 <section class="scr" id="pass"><h3>Enter Passcode</h3><p id="phint"></p><div id="pdots"><i></i><i></i><i></i><i></i></div><div id="pad"></div><div id="pbot"><span>Emergency</span><span id="pcancel">Cancel</span></div>
-<div id="intro"><h1>UNKNOWN</h1><div class="sub">A LNGSHOT Horror Interactive AU by hujan</div><div class="imid"><div class="itx"><p>tolong sertakan credit <a class="imt" href="https://x.com/midtales" target="_blank" rel="noopener noreferrer">@midtales</a> dari x jika ingin share au ini ke platform lain, dan jangan upload full. terima kasih</p><i class="ibd"></i><p>jika ingin melakukan checkpoint, buka aplikasi safari. terdapat 5 checkpoint di sana.</p></div><div id="iok" onclick="document.getElementById('intro').classList.add('go')">ok</div></div></div></section>
+<div id="intro"><h1>UNKNOWN</h1><div class="sub">A LNGSHOT Horror Interactive AU by hujan</div><div class="cw" style="background:rgba(255,59,48,.15);border:1px solid rgba(255,59,48,.4);border-radius:10px;padding:12px 14px;margin:12px 0;font-size:12px;line-height:1.5;color:#ffb3b0;text-align:left"><b style="color:#ff453a">⚠ Content warning</b><br>Psychological horror · death · unsettling imagery · reality distortion.<br>Disarankan pakai headphone. Tidak untuk pembaca sensitif.</div><div class="imid"><div class="itx"><p>tolong sertakan credit <a class="imt" href="https://x.com/midtales" target="_blank" rel="noopener noreferrer">@midtales</a> dari x jika ingin share au ini ke platform lain, dan jangan upload full. terima kasih</p><i class="ibd"></i><p>jika ingin melakukan checkpoint, buka aplikasi safari. terdapat 5 checkpoint di sana.</p></div><div id="iok" onclick="document.getElementById('intro').classList.add('go')">ok</div></div></div></section>
 <section id="vcs"><video playsinline></video><div class="vi"><div class="av"></div><h2>Unknown</h2><p>FaceTime Video…</p><div class="vb"><div><b class="cb r" onclick="vcDecline()"><span class="io" data-io="close"></span></b>Decline</div><div><b class="cb g" onclick="vcAccept()"><span class="io" data-io="videocam"></span></b>Accept</div></div></div><div class="vt"><b>Unknown</b><small id="vct">00:00</small></div><div class="vself"></div><div class="vctl"><b><span class="io" data-io="ellipsis-horizontal"></span></b><b><span class="io" data-io="camera-reverse"></span></b><b><span class="io" data-io="mic-off"></span></b><b><span class="io" data-io="videocam"></span></b><b class="r"><span class="io" data-io="call"></span></b></div></section>
 <div id="endsc"><p></p></div>
 <div id="banner"><u data-i="msg"></u><p><b></b><span></span></p><small>Now</small></div>
@@ -567,7 +567,7 @@ function openApp(id,view,idx){
   if(id==='gmail')P.dataset.ui='dark';
   if(id==='photos'){const g=$('#p-grid');requestAnimationFrame(()=>g.scrollTop=$('#pgrid').offsetHeight-380)}
   if(view==='m-chat')openChat(idx)
-  onAppOpen(id);
+  requestAnimationFrame(()=>onAppOpen(id));
 }
 function home(){
   $('#fpc').innerHTML='';
@@ -1096,9 +1096,9 @@ function vcall(e){
     const show=()=>{V.className='on in';vib();ring=setInterval(vib,1800);rh=ringStart('ring')};
     const stopRing=()=>{clearInterval(ring);rh&&rh.stop()};
     show();
-    window.vcDecline=()=>{stopRing();V.className='';setTimeout(show,1800)};
+    window.vcDecline=()=>{stopBreathing();stopRing();V.className='';setTimeout(show,1800)};
     window.vcAccept=()=>{
-      stopRing();V.className='on live';
+      stopBreathing();stopRing();V.className='on live';
       V.querySelector('.vself').style.backgroundImage=U('blur');
       let fin=false;const t0=Date.now(),tm=$('#vct'),fm=n=>'00:'+String(n).padStart(2,'0');tm.textContent=fm(0);
       const clk=setInterval(()=>{tm.textContent=fm(Math.floor((Date.now()-t0)/1000))},500);
@@ -1132,6 +1132,8 @@ function vcall(e){
           await sleep(10000);
           im.style.transition='none';
           im.style.opacity='0';
+          try{localStorage.removeItem(SAVE_KEY)}catch(e){}
+          STATE.tension=0;
           res()
         },2000)
       };
@@ -1221,6 +1223,8 @@ const CP_AT=[
 ];
 const typedText=seq=>{let r='';for(const it of seq)r=typeof it==='number'?r.slice(0,Math.max(0,r.length+it)):r+it;return r};
 function cpTo(k){
+  clearV2Timers();stopBreathing();
+  STATE.reactedApps.clear();STATE.ghosted=false;STATE.unsent=false;idleMs=0;idleStage=0;
   gen++;run=false;ts={step:-1,i:0,j:0};pending=null;
   hideImg();$('#dlg').classList.remove('on');$('#banner').classList.remove('in');
   kb(0);inp.textContent='';sync();
@@ -1258,6 +1262,7 @@ function cpTo(k){
   CFG.contacts.forEach(c=>c.el.scrollTop=c.el.scrollHeight);
   step=k;
   home();
+  scheduleNotifGhost();
   runner()
 }
 function cpGo(n){
@@ -1284,9 +1289,9 @@ function sfxLoad(){
 function playBuf(name,loop,pan=0,gain=1){
   const b=BUF[name];if(!b||!AC||AC.state!=='running')return null;
   const s=AC.createBufferSource(),g=AC.createGain();s.buffer=b;s.loop=!!loop;g.gain.value=gain;
-  if(AC.createStereoPanner){const p=AC.createStereoPanner();p.pan.value=pan;s.connect(p).connect(g).connect(AC.destination)}else s.connect(g).connect(AC.destination);
+  let p=null;if(AC.createStereoPanner){p=AC.createStereoPanner();p.pan.value=pan;s.connect(p).connect(g).connect(AC.destination)}else s.connect(g).connect(AC.destination);
   s.start();
-  return{pause(){try{s.stop()}catch(e){}},stop(){try{s.stop()}catch(e){}}}
+  return{pause(){try{s.stop()}catch(e){}},stop(){try{s.stop()}catch(e){}},setPan(v){if(p)p.pan.linearRampToValueAtTime(v,AC.currentTime+.1)},setGain(v){g.gain.linearRampToValueAtTime(v,AC.currentTime+.1)}}
 }
 function ringStart(name){return playBuf(name,true)||{stop(){}}}
 function sfx(name,loop){
@@ -1303,10 +1308,21 @@ function sfx(name,loop){
    ================================================================ */
 const SAVE_KEY='unknown_au_save_v2';
 const STATE={tension:0,reactedApps:new Set(),chapter:1,started:false,ghosted:false,unsent:false,lastGlitch:0};
-const WATCHER_REACTIONS={photos:'fotonya bagus ya',notes:'puisimu indah',maps:'mau kemana?',insta:'aku follow kamu sekarang',files:'file itu apa?',safari:'checkpoint ya?',cal:'besok kamu sibuk ya',gmail:'email dari siapa?',set:'mau matiin apa?',phone:'telepon siapa?'};
+const WATCHER_REACTIONS={photos:['fotonya bagus ya','yang mana yang kamu suka','aku juga lihat itu','jangan dihapus ya'],notes:['puisimu indah','kamu nulis itu kapan','yang tentang mimpi buruk','aku baca semua'],maps:['mau kemana?','jangan kemana mana','peta itu salah','kamu tersesat ya'],insta:['aku follow kamu sekarang','fotomu yang mana','jangan post yang itu','aku lihat kamu'],files:['file itu apa?','yang 210526 itu','jangan dibuka','aku juga punya'],safari:['checkpoint ya?','kamu mau ulang?','jangan ke yang terakhir','aku inget semuanya'],cal:['besok kamu sibuk ya','jangan lupa','aku tunggu','tanggal itu penting'],gmail:['email dari siapa?','jangan dibalas','aku baca juga','itu bukan dari dia'],set:['mau matiin apa?','jangan matiin','aku masih disini','batre kamu sisa berapa'],phone:['telepon siapa?','jangan telepon','aku denger kamu','nggak ada yang angkat']};
 const CRITICAL_IMAGES=['pap3','pap4','pap5','gerbangkos','koridor','dalamkamar','berdiri','merah'];
 const CRITICAL_SFX=['knock_1','knock_2','knock_4','knock_5'];
-let ambience=null,idleMs=0,idleStage=0,readingTimer=null,ghostTimer=null,escapeCount=0,photoAnomaly=false,noteAnomaly=false;
+const WHISPER_QUEUE=[],V2_TIMERS=[],REACTION_USED={};
+const IDLE_WHISPERS=['kamu diem aja ya?','aku tau kamu masih disana','jangan sembunyi','kamu denger aku?','aku nunggu'];
+const IDLE_WHISPERS_2=['jangan tidur','kamu masih bangun?','aku disini','jangan tutup mata'];
+const GHOST_DOTS=['...','..','....','.'];
+const UNSENT_MESSAGES=['aku liat kamu','kamu cantik','jangan keluar','aku deket','kamu takut ya','aku suka kamu'];
+const ESCAPE_WHISPERS=['kok keluar?','jangan pergi','aku masih disini','kamu kemana','balik'];
+const READING_WHISPERS=['kamu lihat fotonya ya','yang mana yang kamu lihat','jangan dilihat terus','aku masih disana','kamu ngerti ya'];
+const NOTIF_GHOSTS=[{app:'Gmail',title:'Unknown',body:'1 new message'},{app:'Instagram',title:'unknown',body:'started following you'},{app:'Calendar',title:'Unknown',body:'Event: jangan keluar'},{app:'Messages',title:'Unknown',body:'aku disini'}];
+let ambience=null,idleMs=0,idleStage=0,readingTimer=null,ghostTimer=null,whisperDrainTimer=null,dimTimer=null,breathState=null,escapeCount=0,photoAnomaly=false,noteAnomaly=false,idleUsed1=0,idleUsed2=0,unsentUsed=0,escapeUsed=0,readingUsed=0,notifGhostTimer=null;
+function v2Timeout(fn,ms){const id=setTimeout(()=>{const i=V2_TIMERS.indexOf(id);if(i>=0)V2_TIMERS.splice(i,1);fn()},ms);V2_TIMERS.push(id);return id}
+function v2Interval(fn,ms){const id=setInterval(fn,ms);V2_TIMERS.push(id);return id}
+function clearV2Timers(){V2_TIMERS.forEach(id=>{clearTimeout(id);clearInterval(id)});V2_TIMERS.length=0;WHISPER_QUEUE.length=0;clearTimeout(readingTimer);clearTimeout(ghostTimer);if(whisperDrainTimer){clearInterval(whisperDrainTimer);whisperDrainTimer=null}if(dimTimer){clearTimeout(dimTimer);dimTimer=null}notifGhostTimer=null}
 function dynamicWait(e){
   const base=e.wait??1200;
   if(e.img&&CRITICAL_IMAGES.includes(e.img)&&STATE.tension>.4)return base+2000+Math.random()*3000;
@@ -1321,8 +1337,8 @@ function setTension(value){
 function initAmbience(){
   if(!AC||ambience)return;
   const mk=(hz,type='sine')=>{const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.value=hz;g.gain.value=0;o.connect(g).connect(AC.destination);o.start();return{osc:o,gain:g}};
-  ambience={hum:mk(50,'sine'),drone:mk(40,'sine'),crickets:mk(3800,'square'),heart:mk(1,'sine')};
-  ambience.crickets.osc.frequency.setValueAtTime(0,AC.currentTime);
+  const mkCrickets=()=>{const b=AC.createBuffer(1,AC.sampleRate*2,AC.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;const src=AC.createBufferSource(),flt=AC.createBiquadFilter(),g=AC.createGain();src.buffer=b;src.loop=true;flt.type='bandpass';flt.frequency.value=2200;flt.Q.value=1.2;g.gain.value=0;src.connect(flt).connect(g).connect(AC.destination);src.start();return{osc:src,gain:g}};
+  ambience={hum:mk(50,'sine'),drone:mk(40,'sine'),crickets:mkCrickets(),heart:mk(1,'sine')};
   updateAmbience();
 }
 function ramp(node,value,seconds=2){if(!AC||!node)return;node.gain.cancelScheduledValues(AC.currentTime);node.gain.linearRampToValueAtTime(value,AC.currentTime+seconds)}
@@ -1333,15 +1349,17 @@ function updateAmbience(){
   if(t>.55){ambience.heart.osc.frequency.setValueAtTime(1+Math.max(0,t-.55)*1.4,AC.currentTime)}
 }
 function flashWhite(ms=80){const el=$('#horror-flash');if(!el)return;el.style.opacity='1';setTimeout(()=>el.style.opacity='0',ms)}
-function dimScreen(amount=.4,duration=3000,done){const el=$('#horror-dim');if(!el)return;el.style.transition=`opacity ${duration}ms ease`;el.style.opacity=amount;setTimeout(()=>{flashWhite(70);sfx('recv');el.style.opacity=0;done&&done()},duration)}
+function dimScreen(amount=.4,duration=3000,done){const el=$('#horror-dim');if(!el)return;clearTimeout(dimTimer);el.style.transition=`opacity ${duration}ms ease`;el.style.opacity=amount;dimTimer=setTimeout(()=>{flashWhite(70);sfx('recv');el.style.opacity=0;dimTimer=null;done&&done()},duration)}
 function unknown(){return byName('Unknown')}
 function unknownReady(){return STATE.started&&step>0&&!!unknown()}
+function pickReaction(id){const list=WATCHER_REACTIONS[id];if(!list)return null;REACTION_USED[id]=REACTION_USED[id]||[];const available=list.filter(t=>!REACTION_USED[id].includes(t));const text=available.length?available[Math.floor(Math.random()*available.length)]:list[0];REACTION_USED[id].push(text);return text}
+function deliverWhisper(text,c){bub('them',text,c.el,{});reveal(c);arrive(c,text);saveGame()}
 function queueUnknownWhisper(text){
   const c=unknown();if(!c)return;
-  bub('them',text,c.el,{});reveal(c);
-  if(inRoom(c)){sfx('recv')}else arrive(c,text);
-  saveGame();
+  if(inRoom(c)){WHISPER_QUEUE.push(text);startWhisperDrain();return}
+  deliverWhisper(text,c);
 }
+function startWhisperDrain(){if(whisperDrainTimer)return;whisperDrainTimer=setInterval(()=>{const c=unknown();if(!c||inRoom(c))return;if(!WHISPER_QUEUE.length){clearInterval(whisperDrainTimer);whisperDrainTimer=null;return}deliverWhisper(WHISPER_QUEUE.shift(),c)},3000)}
 function queueNotification(app,title,body){
   const b=$('#banner');if(!b)return;
   b.dataset.c=unknown().i;$('#banner b').textContent=title||app;$('#banner span').textContent=body||'';b.classList.add('in');clearTimeout(bt);bt=setTimeout(()=>b.classList.remove('in'),2200)
@@ -1351,23 +1369,23 @@ function onAppOpen(appId){
   STATE.reactedApps.add(appId);
   if(appId==='notes'&&STATE.tension>.6)addNoteAnomaly();
   if(appId==='photos'&&STATE.tension>.5)addPhotoAnomaly();
-  setTimeout(()=>{queueUnknownWhisper(WATCHER_REACTIONS[appId]);if(appId==='insta')setTimeout(()=>queueNotification('Instagram','Unknown','started following you'),1300)},3000+Math.random()*3000);
+  const text=pickReaction(appId);v2Timeout(()=>{queueUnknownWhisper(text);if(appId==='insta')v2Timeout(()=>queueNotification('Instagram','Unknown','started following you'),1300)},3000+Math.random()*3000);
 }
 function watcherEscape(){
   if(!unknownReady()||STATE.tension<=.5)return;
-  escapeCount++;setTimeout(()=>{queueUnknownWhisper(escapeCount>1?'jangan pergi':'kok keluar?');if(escapeCount>1)setTension(STATE.tension+.1)},2000)
+  escapeCount++;const text=ESCAPE_WHISPERS[Math.min(escapeUsed,ESCAPE_WHISPERS.length-1)];escapeUsed++;v2Timeout(()=>{queueUnknownWhisper(text);if(escapeCount>1)setTension(STATE.tension+.1)},2000)
 }
 function typingBubble(c){if(!inRoom(c))return null;const t=bub('them tp','',c.el);t.innerHTML='<i></i><i></i><i></i>';return t}
 function onUnknownChatOpen(c){
-  if(STATE.tension>.5&&!STATE.ghosted){clearTimeout(ghostTimer);ghostTimer=setTimeout(()=>ghostTyping(c),5000)}
+  if(STATE.tension>.5&&!STATE.ghosted){clearTimeout(ghostTimer);ghostTimer=v2Timeout(()=>ghostTyping(c),5000)}
   const el=c.el;el.onpointermove=()=>scheduleReadingReaction(c);el.onscroll=()=>scheduleReadingReaction(c);
 }
 function scheduleReadingReaction(c){
-  if(STATE.tension<=.4)return;clearTimeout(readingTimer);readingTimer=setTimeout(()=>{const t=typingBubble(c);setTimeout(()=>{t&&t.remove();setTimeout(()=>queueUnknownWhisper('kamu lihat fotonya ya'),5000)},8000+Math.random()*4000)},4000)
+  if(STATE.tension<=.4)return;clearTimeout(readingTimer);readingTimer=v2Timeout(()=>{const t=typingBubble(c);v2Timeout(()=>{t&&t.remove();v2Timeout(()=>{const text=READING_WHISPERS[readingUsed%READING_WHISPERS.length];readingUsed++;queueUnknownWhisper(text)},5000)},8000+Math.random()*4000)},4000)
 }
 function ghostTyping(c){
   if(!inRoom(c)||STATE.ghosted)return;STATE.ghosted=true;const t1=typingBubble(c);
-  setTimeout(()=>{t1&&t1.remove();setTimeout(()=>{const t2=typingBubble(c);setTimeout(()=>{t2&&t2.remove();const dots=bub('them','...',c.el);setTimeout(()=>{dots.classList.add('watcher-unsent');setTimeout(()=>{dots.remove();sysLine(c.el,'Unknown unsent a message')},340)},4000)},8000+Math.random()*4000)},4000)},8000+Math.random()*4000)
+  v2Timeout(()=>{t1&&t1.remove();v2Timeout(()=>{const t2=typingBubble(c);v2Timeout(()=>{t2&&t2.remove();const dots=bub('them',GHOST_DOTS[Math.floor(Math.random()*GHOST_DOTS.length)],c.el);v2Timeout(()=>{dots.classList.add('watcher-unsent');v2Timeout(()=>{dots.remove();sysLine(c.el,'Unknown unsent a message')},340)},4000)},8000+Math.random()*4000)},4000)},8000+Math.random()*4000)
 }
 function addNoteAnomaly(){
   if(noteAnomaly)return;noteAnomaly=true;const n={t:'aku',b:'disini',d:new Date(),watcher:true};CFG.notes.unshift(n);
@@ -1377,8 +1395,8 @@ function addPhotoAnomaly(){
   if(photoAnomaly)return;photoAnomaly=true;const tile=document.createElement('div');tile.className='ti';tile.style.cssText='background:radial-gradient(ellipse at 50% 46%,#333 0 7%,#090909 9%,#020202 62%),#000;position:relative';tile.innerHTML='<i style="position:absolute;inset:0;background:linear-gradient(90deg,transparent 44%,rgba(155,155,155,.18) 50%,transparent 56%);"></i>';tile.onclick=()=>{viewImg('data:image/svg+xml;utf8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 393 700"><rect width="100%" height="100%" fill="#030303"/><ellipse cx="196" cy="350" rx="43" ry="132" fill="#171717"/><circle cx="196" cy="210" r="46" fill="#262626"/><circle cx="179" cy="204" r="4" fill="#aaa"/><circle cx="213" cy="204" r="4" fill="#aaa"/></svg>`))};$('#pgrid').prepend(tile)
 }
 function microGlitch(){
-  if(STATE.tension<=.4||Date.now()-STATE.lastGlitch<45000)return;STATE.lastGlitch=Date.now();
-  const options=[()=>{const n=$('#mname');if(!n)return;n.dataset.old=n.innerHTML;n.innerHTML='Oh'+io('chevron-forward');setTimeout(()=>n.innerHTML=n.dataset.old,300)},()=>{const b=$('#sb .bat b');if(!b)return;const old=b.textContent;b.textContent=Math.max(1,+old-5);setTimeout(()=>b.textContent=old,2000)},()=>{const clock=$('#clk');if(!clock)return;const old=clock.textContent;const d=new Date();d.setMinutes(d.getMinutes()-1);clock.textContent=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');setTimeout(()=>clock.textContent=old,1000)},()=>{const b=[...document.querySelectorAll('.b')].slice(-1)[0];if(b){b.classList.add('rde-mirror');setTimeout(()=>b.classList.remove('rde-mirror'),300)}}];options[Math.floor(Math.random()*options.length)]();try{navigator.vibrate&&navigator.vibrate([30])}catch(e){}
+  if(STATE.tension<=.4||Date.now()-STATE.lastGlitch<45000||$('#endsc').classList.contains('on')||$('#vcs').classList.contains('on'))return;STATE.lastGlitch=Date.now();const inMessages=$('#app-messages').classList.contains('open');
+  const options=[()=>{if(!inMessages)return false;const n=$('#mname');if(!n)return false;const old=n.innerHTML;n.innerHTML='Oh'+io('chevron-forward');v2Timeout(()=>n.innerHTML=old,300)},()=>{const b=$('#sb .bat b');if(!b)return false;const old=b.textContent;b.textContent=Math.max(1,+old-5);v2Timeout(()=>b.textContent=old,2000)},()=>{const clock=$('#clk');if(!clock)return false;const old=clock.textContent,d=new Date();d.setMinutes(d.getMinutes()-1);clock.textContent=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');v2Timeout(()=>clock.textContent=old,1000)},()=>{if(!inMessages)return false;const b=[...document.querySelectorAll('.b')].slice(-1)[0];if(!b)return false;b.classList.add('rde-mirror');v2Timeout(()=>b.classList.remove('rde-mirror'),300)}];for(let i=0;i<4;i++){if(options[Math.floor(Math.random()*options.length)]()!==false)break}try{navigator.vibrate&&navigator.vibrate([30])}catch(e){}
 }
 function renameGroup(name){const c=byName('4 people');if(!c||c.currentName===name)return;c.currentName=name;const row=$('#gm'+c.i);if(row)row.querySelector('b').childNodes[0].textContent=name;if(cur===c.i)$('#mname').innerHTML=name+io('chevron-forward')}
 function advanceExperience(e){
@@ -1389,31 +1407,34 @@ function advanceExperience(e){
   if(e.room==='woojin'&&e.t==='lu ngapain bediri diem doang depan pintu'){renameGroup('3 people');setTension(.86);startBreathingProximity()}
   if(e.room==='ryul'&&e.t==='Ohyul?')renameGroup('2 people');
   if(e.type==='vcall')renameGroup('1 person');
-  if(e.type==='blockfail'&&step>0){const u=unknown();u.currentName='Oh';if(cur===u.i)openChat(u.i);setTimeout(()=>{u.currentName='Ohyul';if(cur===u.i)openChat(u.i)},9000);setTimeout(()=>{u.currentName='Unknown';if(cur===u.i)openChat(u.i)},18000)}
-  if(STATE.tension>.6&&!STATE.unsent){STATE.unsent=true;setTimeout(()=>{const c=unknown(),m=bub('them','aku liat kamu',c.el);if(!inRoom(c))arrive(c,'aku liat kamu');setTimeout(()=>{m.classList.add('watcher-unsent');setTimeout(()=>{m.remove();sysLine(c.el,'Unknown unsent a message')},340)},4000)},5000)}
-  if(STATE.tension>.85)setTimeout(()=>dimScreen(.35,8000),1000);
+  if(e.type==='blockfail'&&step>0){const u=unknown();u.currentName='Oh';if(cur===u.i)openChat(u.i);v2Timeout(()=>{u.currentName='Ohyul';if(cur===u.i)openChat(u.i)},9000);v2Timeout(()=>{u.currentName='Unknown';if(cur===u.i)openChat(u.i);v2Timeout(()=>queueUnknownWhisper('kamu sadar ya'),2000)},18000)}
+  if(STATE.tension>.6&&!STATE.unsent){STATE.unsent=true;v2Timeout(()=>{const c=unknown();if(!c)return;const text=UNSENT_MESSAGES[unsentUsed%UNSENT_MESSAGES.length];unsentUsed++;const m=bub('them',text,c.el);if(!inRoom(c))arrive(c,text);v2Timeout(()=>{m.classList.add('watcher-unsent');v2Timeout(()=>{m.remove();sysLine(c.el,'Unknown unsent a message')},340)},4000)},5000)}
+  if(STATE.tension>.85)v2Timeout(()=>dimScreen(.35,8000),1000);
   microGlitch();
 }
-function startBreathingProximity(){
-  if(!AC)return;const breath=playBuf('breath2',true,-.9,.1);if(!breath)return;let p=-.9,g=.1,elapsed=0;const id=setInterval(()=>{elapsed+=1;p=Math.min(0,p+.045);g=Math.min(.4,g+.015);if(elapsed>=20){clearInterval(id);breath.stop();sfx('knock_5')}},1000)
-}
+function startBreathingProximity(){if(!AC||breathState)return;const breath=playBuf('breath2',true,-.9,.1);if(!breath)return;let p=-.9,g=.1,elapsed=0;const id=v2Interval(()=>{elapsed++;p=Math.min(0,p+.045);g=Math.min(.4,g+.015);breath.setPan(p);breath.setGain(g);if(elapsed>=20){stopBreathing();sfx('knock_5')}},1000);breathState={src:breath,id}}
+function stopBreathing(){if(!breathState)return;clearInterval(breathState.id);const i=V2_TIMERS.indexOf(breathState.id);if(i>=0)V2_TIMERS.splice(i,1);try{breathState.src.stop()}catch(e){}breathState=null}
+function idlePunishStage1(){sfx('knock_1');v2Timeout(()=>sfx('knock_2'),3000);v2Timeout(()=>sfx('knock_5'),5000);v2Timeout(()=>{queueUnknownWhisper(IDLE_WHISPERS[idleUsed1%IDLE_WHISPERS.length]);idleUsed1++},6500);setTension(STATE.tension+.1)}
+function idlePunishStage2(){dimScreen(.4,3000,()=>{queueUnknownWhisper(IDLE_WHISPERS_2[idleUsed2%IDLE_WHISPERS_2.length]);idleUsed2++;setTension(STATE.tension+.1)})}
 setInterval(()=>{
-  if(!STATE.started||P.classList.contains('locked')||CL.classList.contains('on')||$('#endsc').classList.contains('on'))return;
+  if(!STATE.started||P.classList.contains('locked')||CL.classList.contains('on')||$('#endsc').classList.contains('on')||$('#vcs').classList.contains('on'))return;
   idleMs+=1000;
-  if(idleMs>=25000&&idleStage===0&&STATE.tension>.35){idleStage=1;sfx('knock_1');setTimeout(()=>sfx('knock_2'),3000);setTimeout(()=>sfx('knock_5'),5000);setTimeout(()=>queueUnknownWhisper('kamu diem aja ya?'),6500);setTension(STATE.tension+.1)}
-  if(idleMs>=40000&&idleStage===1){idleStage=2;dimScreen(.4,3000,()=>{queueUnknownWhisper('jangan tidur');setTension(STATE.tension+.1)})}
+  if(idleMs>=25000&&idleStage===0&&STATE.tension>.35){idleStage=1;idlePunishStage1()}
+  if(idleMs>=40000&&idleStage===1){idleStage=2;idlePunishStage2()}
 },1000);
 ['pointerdown','keydown','touchstart'].forEach(ev=>document.addEventListener(ev,()=>{idleMs=0;idleStage=0},{passive:true}));
+setInterval(()=>{if(STATE.tension<=0||CL.classList.contains('on')||$('#vcs').classList.contains('on')||$('#dlg').classList.contains('on')||idleMs<3000)return;setTension(STATE.tension-.005)},10000);
+function scheduleNotifGhost(){if(notifGhostTimer)return;notifGhostTimer=v2Interval(()=>{if(STATE.tension<=.5||!unknownReady()||$('#banner').classList.contains('in')||CL.classList.contains('on'))return;const g=NOTIF_GHOSTS[Math.floor(Math.random()*NOTIF_GHOSTS.length)],b=$('#banner');b.dataset.c=unknown().i;$('#banner b').textContent=g.title;$('#banner span').textContent=g.body;b.classList.add('in');v2Timeout(()=>b.classList.remove('in'),1800);vib()},60000+Math.random()*30000)}
 function saveGame(){try{localStorage.setItem(SAVE_KEY,JSON.stringify({step,tension:STATE.tension,reactedApps:[...STATE.reactedApps],lastPlayedAt:Date.now(),chapter:STATE.chapter}))}catch(e){}}
 function loadGame(){try{const raw=localStorage.getItem(SAVE_KEY),saved=raw&&JSON.parse(raw);return saved&&Number.isInteger(saved.step)?saved:null}catch(e){return null}}
 function restoreProgress(){
-  const saved=loadGame();if(!saved||saved.step<=0||saved.step>=CFG.story.length)return;
-  STATE.started=true;setTension(+saved.tension||0);STATE.reactedApps=new Set(Array.isArray(saved.reactedApps)?saved.reactedApps:[]);
-  cpTo(Math.min(saved.step,CFG.story.length-1));
+  const saved=loadGame();if(!saved||saved.step<=0||saved.step>=CFG.story.length-2)return;
+  const reacted=new Set(Array.isArray(saved.reactedApps)?saved.reactedApps:[]);STATE.started=true;setTension(+saved.tension||0);cpTo(Math.min(saved.step,CFG.story.length-3));STATE.reactedApps=reacted;
 }
-function showReturnMessage(){try{const raw=localStorage.getItem(SAVE_KEY);if(!raw)return;const saved=JSON.parse(raw),delta=Date.now()-saved.lastPlayedAt;let text='';if(delta>=864e5)text='aku nungguin kamu';else if(delta>=36e5)text='kamu pergi lama ya';else if(delta>=6e4)text=`kamu pergi selama ${Math.floor(delta/6e4)} menit`;if(text){const d=document.createElement('div');d.id='return-whisper';d.textContent=text;LK.append(d)}}catch(e){}}
+function showReturnMessage(){document.querySelectorAll('#return-whisper').forEach(e=>e.remove());try{const raw=localStorage.getItem(SAVE_KEY);if(!raw)return;const saved=JSON.parse(raw),delta=Date.now()-saved.lastPlayedAt;let text='';if(delta>=864e5)text='aku nungguin kamu';else if(delta>=36e5)text='kamu pergi lama ya';else if(delta>=6e4)text=`kamu pergi selama ${Math.floor(delta/6e4)} menit`;if(text){const d=document.createElement('div');d.id='return-whisper';d.textContent=text;LK.append(d)}}catch(e){}}
 showReturnMessage();
 setInterval(saveGame,5000);
+scheduleNotifGhost();
 
 /* telepon */
 let tm,sec,prevUi='dark',ctok=0,callLines=[],curCall=null,callRes=null,callSfx=null,callAud=null,ringH=null;
